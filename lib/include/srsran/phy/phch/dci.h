@@ -128,6 +128,14 @@ typedef struct SRSRAN_API {
 #endif
 } srsran_dci_dl_t;
 
+typedef enum SRSRAN_API{
+  SRSRAN_RA_PUSCH_HOP_DISABLED  = -1,
+  SRSRAN_RA_PUSCH_HOP_QUART     = 0,
+  SRSRAN_RA_PUSCH_HOP_QUART_NEG = 1,
+  SRSRAN_RA_PUSCH_HOP_HALF      = 2,
+  SRSRAN_RA_PUSCH_HOP_TYPE2     = 3
+} freq_hope;
+
 /** Unpacked DCI Format0 message */
 typedef struct SRSRAN_API {
 
@@ -140,13 +148,7 @@ typedef struct SRSRAN_API {
   /* 36.213 Table 8.4-2: SRSRAN_RA_PUSCH_HOP_HALF is 0 for < 10 Mhz and 10 for > 10 Mhz.
    * SRSRAN_RA_PUSCH_HOP_QUART is 00 for > 10 Mhz and SRSRAN_RA_PUSCH_HOP_QUART_NEG is 01 for > 10 Mhz.
    */
-  enum freq_hope{
-    SRSRAN_RA_PUSCH_HOP_DISABLED  = -1,
-    SRSRAN_RA_PUSCH_HOP_QUART     = 0,
-    SRSRAN_RA_PUSCH_HOP_QUART_NEG = 1,
-    SRSRAN_RA_PUSCH_HOP_HALF      = 2,
-    SRSRAN_RA_PUSCH_HOP_TYPE2     = 3
-  } freq_hop_fl;
+  freq_hope freq_hop_fl;
 
   // Codeword information
   srsran_dci_tb_t tb;
