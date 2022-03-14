@@ -497,7 +497,7 @@ bool rf_uhd_rx_wait_lo_locked(void* h)
   bool        is_locked   = false;
 
   // blocks until sensor is blocked
-  int error = wait_sensor_locked(handler, sensor_name, false, 300, is_locked);
+  int error = wait_sensor_locked(handler, sensor_name, false, 3000, is_locked);
 
   if (not is_locked and error == SRSRAN_SUCCESS) {
     ERROR("Could not lock reference clock source. Sensor: %s=%s", sensor_name.c_str(), is_locked ? "true" : "false");
