@@ -327,7 +327,7 @@ static void chest_ul_estimate(srsran_chest_ul_t*     q,
 
   // Check if intra-subframe frequency hopping is enabled
   if (n_prb[0] != n_prb[1]) {
-    ERROR("ERROR: intra-subframe frequency hopping not supported in the estimator!!");
+    //ERROR("ERROR: intra-subframe frequency hopping not supported in the estimator!!");
   }
 
   if (res->ce != NULL) {
@@ -381,7 +381,7 @@ int srsran_chest_ul_estimate_pusch(srsran_chest_ul_t*     q,
   uint32_t nof_prb = cfg->grant.L_prb;
 
   if (!srsran_dft_precoding_valid_prb(nof_prb)) {
-    ERROR("Error invalid nof_prb=%d", nof_prb);
+    //ERROR("Error invalid nof_prb=%d", nof_prb);
     return SRSRAN_ERROR_INVALID_INPUTS;
   }
 
