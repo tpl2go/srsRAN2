@@ -319,7 +319,7 @@ static void chest_ul_estimate(srsran_chest_ul_t*     q,
     ta_err /= (float)stride;                     // Divide by the pilot spacing
     ta_err /= 15e3f;                             // Convert from normalized frequency to seconds
     ta_err *= 1e6f;                              // Convert to micro-seconds
-    ta_err     = roundf(ta_err * 1000.0f) / 10000.0f; // Round to one tenth of micro-second
+    ta_err     = roundf(ta_err * 1000.0f) / 1000.0f; // Round to one tenth of micro-second
     res->ta_us = ta_err;
   } else {
     res->ta_us = 0.0f;
