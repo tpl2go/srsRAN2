@@ -39,7 +39,7 @@
 
 #define MAX_REFS_SYM (max_prb * SRSRAN_NRE)
 #define MAX_REFS_SF (max_prb * SRSRAN_NRE * 2) // 2 reference symbols per subframe
-
+#define DO_LINEAR_INTERPOLATION
 /** 3GPP LTE Downlink channel estimator and equalizer.
  * Estimates the channel in the resource elements transmitting references and interpolates for the rest
  * of the resource grid.
