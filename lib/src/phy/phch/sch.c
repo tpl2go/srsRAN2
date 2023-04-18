@@ -253,7 +253,7 @@ static int encode_tb_off(srsran_sch_t*           q,
 
   if (q != NULL && e_bits != NULL && cb_segm != NULL && softbuffer != NULL) {
     if (cb_segm->F) {
-      ERROR("Error filler bits are not supported. Use standard TBS");
+      INFO("Error filler bits are not supported. Use standard TBS");
       return SRSRAN_ERROR;
     }
 
@@ -532,7 +532,7 @@ static int decode_tb(srsran_sch_t*           q,
   }
 
   if (cb_segm->F) {
-    fprintf(stderr, "Error filler bits are not supported. Use standard TBS\n");
+    //fprintf(stderr, "Error filler bits are not supported. Use standard TBS\n");
     return SRSRAN_ERROR_INVALID_INPUTS;
   }
 
