@@ -240,6 +240,89 @@ int rf_cell_search(srsran_rf_t*       rf,
   return ret;
 }
 
+int rf_cell_search_cell_id(srsran_rf_t*       rf,
+                            uint32_t           nof_rx_channels,
+                            cell_search_cfg_t* config,
+                            int                cell_id,
+                            srsran_cell_t*     cell,
+                            float*             cfo)
+{
+  int                           ret = SRSRAN_ERROR;
+  srsran_ue_cellsearch_t        cs;
+  srsran_ue_cellsearch_result_t found_cells[3];
+
+  bzero(found_cells, 3 * sizeof(srsran_ue_cellsearch_result_t));
+
+  if (srsran_ue_cellsearch_init_multi(
+          &cs, config->max_frames_pss, srsran_rf_recv_wrapper_cs, nof_rx_channels, (void*)rf)) {
+    fprintf(stderr, "Error initiating UE cell detect\n");
+    return SRSRAN_ERROR;
+  }
+  if (config->nof_valid_pss_frames) {
+    srsran_ue_cellsearch_set_nof_valid_frames(&cs, config->nof_valid_pss_frames);
+  }
+
+  INFO("Setting sampling frequency %.2f MHz for PSS search", SRSRAN_CS_SAMP_FREQ / 1000000);
+  srsran_rf_set_rx_srate(rf, SRSRAN_CS_SAMP_FREQ);
+
+  INFO("Starting receiver...");
+  srsran_rf_start_rx_stream(rf, false);
+
+  if (config->force_tdd) {
+    srsran_ue_sync_set_frame_type(&cs.ue_sync, SRSRAN_TDD);
+  }
+
+  /* Find a cell in the given N_id_2 or go through the 3 of them to find the strongest */
+  uint32_t max_peak_cell = 0;
+  if (cell_id > 0) {
+    ret           = srsran_ue_cellsearch_scan_cell_id(&cs, cell_id, &found_cells[cell_id % 3]);
+    max_peak_cell = cell_id % 3;
+  } else {
+    ret = srsran_ue_cellsearch_scan(&cs, found_cells, &max_peak_cell);
+  }
+
+  srsran_rf_stop_rx_stream(rf);
+
+  if (ret < 0) {
+    ERROR("Error searching cell");
+    return SRSRAN_ERROR;
+  } else if (ret == 0) {
+    ERROR("Could not find any cell in this frequency");
+    return SRSRAN_SUCCESS;
+  }
+
+  for (int i = 0; i < 3; i++) {
+    if (i == max_peak_cell) {
+      printf("*");
+    } else {
+      printf(" ");
+    }
+    printf("Found Cell_id: %3d %s, CP: %s, DetectRatio=%2.0f%% PSR=%.2f, Power=%.1f dBm\n",
+           found_cells[i].cell_id,
+           found_cells[i].frame_type == SRSRAN_FDD ? "FDD" : "TDD",
+           srsran_cp_string(found_cells[i].cp),
+           found_cells[i].mode * 100,
+           found_cells[i].psr,
+           srsran_convert_amplitude_to_dB(found_cells[i].peak * 1000));
+  }
+
+  // Save result
+  if (cell) {
+    cell->id         = found_cells[max_peak_cell].cell_id;
+    cell->cp         = found_cells[max_peak_cell].cp;
+    cell->frame_type = found_cells[max_peak_cell].frame_type;
+  }
+
+  // Save CFO
+  if (cfo) {
+    *cfo = found_cells[max_peak_cell].cfo;
+  }
+
+  srsran_ue_cellsearch_free(&cs);
+
+  return ret;
+}
+
 /* Finds a cell and decodes MIB from the PBCH.
  * Returns 1 if the cell is found and MIB is decoded successfully.
  * 0 if no cell was found or MIB could not be decoded,
@@ -256,6 +339,28 @@ int rf_search_and_decode_mib(srsran_rf_t*       rf,
 
   printf("Searching for cell...\n");
   ret = rf_cell_search(rf, nof_rx_channels, config, force_N_id_2, cell, cfo);
+  if (ret > 0) {
+    printf("Decoding PBCH for cell %d (N_id_2=%d)\n", cell->id, cell->id % 3);
+    ret = rf_mib_decoder(rf, nof_rx_channels, config, cell, cfo);
+    if (ret < 0) {
+      ERROR("Could not decode PBCH from CELL ID %d", cell->id);
+      return SRSRAN_ERROR;
+    }
+  }
+  return ret;
+}
+
+int rf_search_and_decode_mib_cell_id(srsran_rf_t*       rf,
+                                      uint32_t           nof_rx_channels,
+                                      cell_search_cfg_t* config,
+                                      int                cell_id,
+                                      srsran_cell_t*     cell,
+                                      float*             cfo)
+{
+  int ret = SRSRAN_ERROR;
+
+  printf("Searching for cell...\n");
+  ret = rf_cell_search_cell_id(rf, nof_rx_channels, config, cell_id, cell, cfo);
   if (ret > 0) {
     printf("Decoding PBCH for cell %d (N_id_2=%d)\n", cell->id, cell->id % 3);
     ret = rf_mib_decoder(rf, nof_rx_channels, config, cell, cfo);

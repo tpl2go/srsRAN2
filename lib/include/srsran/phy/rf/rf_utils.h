@@ -45,12 +45,26 @@ SRSRAN_API int rf_cell_search(srsran_rf_t*       rf,
                               srsran_cell_t*     cell,
                               float*             cfo);
 
+SRSRAN_API int rf_cell_search_cell_id(srsran_rf_t*       rf,
+                                      uint32_t           nof_rf_channels,
+                                      cell_search_cfg_t* config,
+                                      int                cell_id,
+                                      srsran_cell_t*     cell,
+                                      float*             cfo);
+
 SRSRAN_API int rf_search_and_decode_mib(srsran_rf_t*       rf,
                                         uint32_t           nof_rf_channels,
                                         cell_search_cfg_t* config,
                                         int                force_N_id_2,
                                         srsran_cell_t*     cell,
                                         float*             cfo);
+
+SRSRAN_API int rf_search_and_decode_mib_cell_id(srsran_rf_t*       rf,
+                                                uint32_t           nof_rf_channels,
+                                                cell_search_cfg_t* config,
+                                                int                cell_id,
+                                                srsran_cell_t*     cell,
+                                                float*             cfo);
 
 SRSRAN_API int rf_cell_search_nbiot(srsran_rf_t* rf, cell_search_cfg_t* config, srsran_nbiot_cell_t* cell, float* cfo);
 

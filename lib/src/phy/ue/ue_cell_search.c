@@ -361,3 +361,79 @@ int srsran_ue_cellsearch_scan_N_id_2(srsran_ue_cellsearch_t*        q,
 
   return ret;
 }
+
+int srsran_ue_cellsearch_scan_cell_id(srsran_ue_cellsearch_t*        q,
+                                     uint32_t                       cell_id,
+                                     srsran_ue_cellsearch_result_t* found_cell)
+{
+  int      ret                 = SRSRAN_ERROR_INVALID_INPUTS;
+  uint32_t nof_detected_frames = 0;
+  uint32_t nof_scanned_frames  = 0;
+
+  if (q != NULL) {
+    ret = SRSRAN_SUCCESS;
+
+    bzero(q->candidates, sizeof(srsran_ue_cellsearch_result_t) * q->max_frames);
+    bzero(q->mode_ntimes, sizeof(uint32_t) * q->max_frames);
+    bzero(q->mode_counted, sizeof(uint8_t) * q->max_frames);
+
+    srsran_ue_sync_set_N_id_2(&q->ue_sync, cell_id % 3);
+    srsran_sync_set_N_id_1(&q->ue_sync.sfind, cell_id / 3);
+    // srsran_cell_t target_cell;
+    // target_cell.id = cell_id;
+    // srsran_ue_sync_set_cell(&q->ue_sync, target_cell);
+    
+    srsran_ue_sync_reset(&q->ue_sync);
+    srsran_ue_sync_cfo_reset(&q->ue_sync, 0.0f);
+    srsran_ue_sync_set_nof_find_frames(&q->ue_sync, q->max_frames);
+
+    do {
+      ret = srsran_ue_sync_zerocopy(&q->ue_sync, q->sf_buffer, CELL_SEARCH_BUFFER_MAX_SAMPLES);
+      if (ret < 0) {
+        ERROR("Error calling srsran_ue_sync_work()");
+        return -1;
+      } else if (ret == 1) {
+        /* This means a peak was found in find state */
+        ret = srsran_sync_get_cell_id(&q->ue_sync.sfind);
+        if (ret >= 0) {
+          /* Save cell id, cp and peak */
+          q->candidates[nof_detected_frames].cell_id    = (uint32_t)ret;
+          q->candidates[nof_detected_frames].cp         = srsran_sync_get_cp(&q->ue_sync.sfind);
+          q->candidates[nof_detected_frames].peak       = q->ue_sync.sfind.pss.peak_value;
+          q->candidates[nof_detected_frames].psr        = srsran_sync_get_peak_value(&q->ue_sync.sfind);
+          q->candidates[nof_detected_frames].cfo        = 15000 * srsran_sync_get_cfo(&q->ue_sync.sfind);
+          q->candidates[nof_detected_frames].frame_type = srsran_ue_sync_get_frame_type(&q->ue_sync);
+          INFO("CELL SEARCH: [%d/%d/%d]: Found peak PSR=%.3f, Cell_id: %d CP: %s, CFO=%.1f KHz",
+               nof_detected_frames,
+               nof_scanned_frames,
+               q->nof_valid_frames,
+               q->candidates[nof_detected_frames].psr,
+               q->candidates[nof_detected_frames].cell_id,
+               srsran_cp_string(q->candidates[nof_detected_frames].cp),
+               q->candidates[nof_detected_frames].cfo / 1000);
+
+          nof_detected_frames++;
+        }
+      } else if (ret == 0) {
+        /* This means a peak is not yet found and ue_sync is in find state
+         * Do nothing, just wait and increase nof_scanned_frames counter.
+         */
+      }
+
+      nof_scanned_frames++;
+
+    } while (nof_scanned_frames < q->max_frames && nof_detected_frames < q->nof_valid_frames);
+
+    /* In either case, check if the mean PSR is above the minimum threshold */
+    if (nof_detected_frames > 0) {
+      ret = 1; // A cell has been found.
+      if (found_cell) {
+        get_cell(q, nof_detected_frames, found_cell);
+      }
+    } else {
+      ret = 0; // A cell was not found.
+    }
+  }
+
+  return ret;
+}

@@ -93,6 +93,9 @@ SRSRAN_API void srsran_ue_cellsearch_free(srsran_ue_cellsearch_t* q);
 SRSRAN_API int
 srsran_ue_cellsearch_scan_N_id_2(srsran_ue_cellsearch_t* q, uint32_t N_id_2, srsran_ue_cellsearch_result_t* found_cell);
 
+SRSRAN_API int
+srsran_ue_cellsearch_scan_cell_id(srsran_ue_cellsearch_t* q, uint32_t cell_id, srsran_ue_cellsearch_result_t* found_cell);
+
 SRSRAN_API int srsran_ue_cellsearch_scan(srsran_ue_cellsearch_t*       q,
                                          srsran_ue_cellsearch_result_t found_cells[3],
                                          uint32_t*                     max_N_id_2);
