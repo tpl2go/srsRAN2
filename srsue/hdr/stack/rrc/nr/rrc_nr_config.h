@@ -24,7 +24,7 @@
 
 #include <string>
 #include <vector>
-
+#include <stdint.h>
 namespace srsue {
 
 // Expert arguments to create GW without proper RRC
